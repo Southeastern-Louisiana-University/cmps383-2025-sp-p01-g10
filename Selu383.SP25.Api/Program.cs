@@ -16,7 +16,7 @@ namespace Selu383.SP25.Api
             builder.Services.AddOpenApi();
 
             // Add Database Context
-            builder.Services.AddDbContext<DatabaseContext>(options =>
+            builder.Services.AddDbContext<DataContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
@@ -24,7 +24,7 @@ namespace Selu383.SP25.Api
             // Apply migrations at startup
             using (var scope = app.Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                var db = scope.ServiceProvider.GetRequiredService<DataContext>();
                 await db.Database.MigrateAsync();
             }
 
