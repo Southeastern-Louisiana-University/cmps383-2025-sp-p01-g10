@@ -1,83 +1,89 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Selu383.SP25.Api.Entities;
+using Selu383.SP25.Api.Data;
 using Selu383.SP25.Api.Dtos;
+using Selu383.SP25.Api.Entities;
 
-namespace Selu383.SP25.Api.Controllers
+[Route("api/theaters")]
+[ApiController]
+public class TheatersController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class TheatersController : ControllerBase
-    {
-        public class TheaterDto
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public string Address { get; set; }
-            public int SeatCount { get; set; }
-        }
+    private readonly DataContext _context;
 
-        private static List<TheaterDto> theaters = new List<TheaterDto>
+    public TheatersController(DataContext context)
+    {
+        _context = context;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<TheaterDto>>> GetAll()
+    {
+        var theaters = await _context.Theaters
+            .Select(t => new TheaterDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Address = t.Address,
+                SeatCount = t.SeatCount
+            })
+            .ToListAsync();
+
+        return Ok(theaters);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TheaterDto>> GetById(int id)
+    {
+        var theater = await _context.Theaters.FindAsync(id);
+        if (theater == null) return NotFound();
+        return Ok(new TheaterDto { Id = theater.Id, Name = theater.Name, Address = theater.Address, SeatCount = theater.SeatCount });
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<TheaterDto>> Create([FromBody] TheaterDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var theater = new Theater
         {
-            new TheaterDto { Id = 1, Name = "Grand Cinema", Address = "Downtown", SeatCount = 150 },
-            new TheaterDto { Id = 2, Name = "Movie Palace", Address = "Uptown", SeatCount = 200 }
+            Name = dto.Name,
+            Address = dto.Address,
+            SeatCount = dto.SeatCount
         };
 
-        [HttpGet]
-        public ActionResult<IEnumerable<TheaterDto>> GetAllTheaters()
-        {
-            return Ok(theaters);
-        }
+        _context.Theaters.Add(theater);
+        await _context.SaveChangesAsync();
 
-        [HttpGet("{id}")]
-        public ActionResult<TheaterDto> GetTheaterById(int id)
-        {
-            var theater = theaters.FirstOrDefault(t => t.Id == id);
-            if (theater == null) return NotFound("Theater not found.");
-            return Ok(theater);
-        }
+        dto.Id = theater.Id;
+        return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+    }
 
-        [HttpPost]
-        public ActionResult<TheaterDto> CreateTheater([FromBody] TheaterDto theaterDto)
-        {
-            if (string.IsNullOrEmpty(theaterDto.Name) || theaterDto.Name.Length > 120 ||
-                string.IsNullOrEmpty(theaterDto.Address) || theaterDto.SeatCount < 1)
-            {
-                return BadRequest("Invalid input. Ensure name, address, and seat count are valid.");
-            }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] TheaterDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            theaterDto.Id = theaters.Count + 1;
-            theaters.Add(theaterDto);
-            return CreatedAtAction(nameof(GetTheaterById), new { id = theaterDto.Id }, theaterDto);
-        }
+        var theater = await _context.Theaters.FindAsync(id);
+        if (theater == null) return NotFound();
 
-        [HttpPut("{id}")]
-        public ActionResult<TheaterDto> UpdateTheater(int id, [FromBody] TheaterDto theaterDto)
-        {
-            var theater = theaters.FirstOrDefault(t => t.Id == id);
-            if (theater == null) return NotFound("Theater not found.");
+        theater.Name = dto.Name;
+        theater.Address = dto.Address;
+        theater.SeatCount = dto.SeatCount;
 
-            if (string.IsNullOrEmpty(theaterDto.Name) || theaterDto.Name.Length > 120 ||
-                string.IsNullOrEmpty(theaterDto.Address) || theaterDto.SeatCount < 1)
-            {
-                return BadRequest("Invalid input. Ensure name, address, and seat count are valid.");
-            }
+        await _context.SaveChangesAsync();
+        return Ok(dto);
+    }
 
-            theater.Name = theaterDto.Name;
-            theater.Address = theaterDto.Address;
-            theater.SeatCount = theaterDto.SeatCount;
-            return Ok(theater);
-        }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var theater = await _context.Theaters.FindAsync(id);
+        if (theater == null) return NotFound();
 
-        [HttpDelete("{id}")]
-        public ActionResult<TheaterDto> DeleteTheater(int id)
-        {
-            var theater = theaters.FirstOrDefault(t => t.Id == id);
-            if (theater == null) return NotFound("Theater not found.");
-
-            theaters.Remove(theater);
-            return Ok(theater);
-        }
+        _context.Theaters.Remove(theater);
+        await _context.SaveChangesAsync();
+        return Ok();
     }
 }
-
