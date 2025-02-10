@@ -19,13 +19,6 @@ public class TheatersController : ControllerBase
     public async Task<ActionResult<List<TheaterDto>>> GetAll()
     {
         var theaters = await _context.Theaters
-            .Select(t => new TheaterDto
-            {
-                Id = t.Id,
-                Name = t.Name,
-                Address = t.Address,
-                SeatCount = t.SeatCount
-            })
             .ToListAsync();
 
         return Ok(theaters);
@@ -36,27 +29,19 @@ public class TheatersController : ControllerBase
     {
         var theater = await _context.Theaters.FindAsync(id);
         if (theater == null) return NotFound();
-        return Ok(new TheaterDto { Id = theater.Id, Name = theater.Name, Address = theater.Address, SeatCount = theater.SeatCount });
+        return Ok(theater);
     }
 
     [HttpPost]
-    public async Task<ActionResult<TheaterDto>> Create([FromBody] TheaterDto dto)
+    public async Task<IActionResult> Create([FromBody] Theater theater)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var theater = new Theater
-        {
-            Name = dto.Name,
-            Address = dto.Address,
-            SeatCount = dto.SeatCount
-        };
-
-        _context.Theaters.Add(theater);
+        await _context.Theaters.AddAsync(theater);
         await _context.SaveChangesAsync();
 
-        dto.Id = theater.Id;
-        return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+        return CreatedAtAction(nameof(GetById), new { id = theater.Id }, theater);
     }
 
     [HttpPut("{id}")]
@@ -73,7 +58,7 @@ public class TheatersController : ControllerBase
         theater.SeatCount = dto.SeatCount;
 
         await _context.SaveChangesAsync();
-        return Ok(dto);
+        return Ok(theater);
     }
 
     [HttpDelete("{id}")]

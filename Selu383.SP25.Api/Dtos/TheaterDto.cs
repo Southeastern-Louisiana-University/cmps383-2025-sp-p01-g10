@@ -12,6 +12,5 @@ public class TheaterDto
     [Required]
     public required string Address { get; set; }
 
-    [Required, Range(1, int.MaxValue)]
     public int SeatCount { get; set; }
 }

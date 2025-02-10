@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Selu383.SP25.Api.Entities;
 
 namespace Selu383.SP25.Api.Data
@@ -10,6 +11,9 @@ namespace Selu383.SP25.Api.Data
        public DbSet<Theater> Theaters { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(DataContext).GetTypeInfo().Assembly);
+
             modelBuilder.Entity<Theater>().HasData(
                 new Theater { Id = 1, Name = "Grand Cinema", Address = "123 Main St", SeatCount = 200 },
                 new Theater { Id = 2, Name = "Regal Theater", Address = "456 Elm St", SeatCount = 150 },
