@@ -33,15 +33,26 @@ public class TheatersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Theater theater)
+    public async Task<IActionResult> Create([FromBody] TheaterDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        await _context.Theaters.AddAsync(theater);
+        if (dto.SeatCount < 1) // Manual check
+            return BadRequest(new { Error = "SeatCount must be at least 1." });
+
+        var theater = new Theater
+        {
+            Name = dto.Name,
+            Address = dto.Address,
+            SeatCount = dto.SeatCount
+        };
+
+        _context.Theaters.Add(theater);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = theater.Id }, theater);
+        dto.Id = theater.Id;
+        return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
     [HttpPut("{id}")]

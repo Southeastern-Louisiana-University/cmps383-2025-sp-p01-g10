@@ -11,7 +11,8 @@ public class Theater
     public string Name { get; set; }
 
     [Required]
-    public string Address { get; set; } 
+    public string Address { get; set; }
 
-   public int SeatCount { get; set; }
+    [Required,Range(1, int.MaxValue, ErrorMessage = "SeatCount must be at least 1.")]
+    public int SeatCount { get; set; }
 }
